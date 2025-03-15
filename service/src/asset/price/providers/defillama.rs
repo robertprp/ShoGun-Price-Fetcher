@@ -11,7 +11,7 @@ use tokio::sync::broadcast::{self as broadcast, Sender};
 use tokio::sync::RwLock;
 use tokio::task::JoinHandle;
 use tokio_stream::{wrappers::BroadcastStream, Stream,};
-use tracing::info;
+use tracing::{info, Instrument};
 use crate::asset::price::price_provider::{AssetPriceEvent, AssetPriceProvider, PriceProvider};
 use crate::asset::Chain;
 use crate::services::ServiceProvider;
@@ -117,10 +117,11 @@ impl PriceProvider for DefiLlamaProvider {
         stream.boxed()
     }
 
-    fn start(&self) -> JoinHandle<Result<(), Error>> {
+    fn start(&self) -> tokio::task::JoinHandle<Result<(), Error>> {
         let provider_clone = self.clone();
         let sender = self.sender.clone();
-        
+        let span = tracing::info_span!("price_provider", price_provider = "defillama");
+
         tokio::spawn(async move {
             let mut interval = tokio::time::interval(std::time::Duration::from_secs(provider_clone.fetch_interval));
             
@@ -139,10 +140,13 @@ impl PriceProvider for DefiLlamaProvider {
                     },
                     Err(e) => {
                         tracing::error!("Failed to fetch asset prices from DefiLlama: {}", e);
+                        break;
                     }
                 }
             }
-        })
+            
+            Ok(())
+        }.instrument(span))
     }
 }
 
