@@ -1,0 +1,9 @@
+.DS_Store
+target
+
+# Configuration
+config.toml
+
+# Grafana
+docker/grafana/tempo-data
+docker/certbot

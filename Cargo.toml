@@ -1,0 +1,41 @@
+[package]
+name = "grafana-shogun"
+version = "0.1.0"
+edition = "2021"
+
+[workspace]
+members = [".", "lib", "service"]
+
+[dependencies]
+lib = { path = "lib" }
+service = { path = "service" }
+tokio = { workspace = true }
+clap = { version = "4.5.4", features = ["derive"] }
+futures = { workspace = true }
+futures-util = { workspace = true }
+tracing = { workspace = true }
+
+[workspace.dependencies]
+thiserror = "1.0.37"
+opentelemetry = { version = "0.27.0", features = ["logs", "metrics", "tracing", "trace"] }
+opentelemetry-otlp = { version = "0.27.0", features = ["tonic", "trace", "tracing", "tokio", "grpc-tonic", "metrics", "logs", "http-proto", "reqwest-client"] }
+tracing-subscriber = { version = "0.3.18", features = ["env-filter", "registry", "std", "fmt"] }
+opentelemetry_sdk = { version = "0.27.0", features = ["tokio", "rt-tokio", "rt-tokio-current-thread", "metrics", "logs", "testing", "trace", "tracing"] }
+tracing-opentelemetry = { version = "0.28.0", features = ["tracing-log"] }
+opentelemetry-appender-tracing = { version = "0.27.0", features = ["log", "experimental_metadata_attributes", "spec_unstable_logs_enabled"] }
+opentelemetry-stdout = { version = "0.27.0", features = ["logs", "metrics", "trace"] }
+tracing = { version = "0.1.41", features = ["std"] }
+error-stack = "0.5.0"
+toml = "0.8.20"
+serde = { version = "1.0.0", features = ["derive", "rc"] }
+buildstructor = "0.6.0"
+tokio = { version = "1.41.0", features = ["full"] }
+ethers = { version = "2.0.14", features = ["abigen", "rustls"] }
+tokio-stream = { version = "0.1.11", features = ["sync"] }
+async-trait = "0.1.74"
+async-tungstenite = { version = "0.23.0", features = ["async-native-tls", "async-std"] }
+chrono = "0.4.24"
+rust_decimal = { version = "1.36.0", features = ["serde"] }
+futures = "0.3.28"
+futures-util = "0.3.28"
+reqwest = { version = "0.11.11", features = ["blocking", "json"] }

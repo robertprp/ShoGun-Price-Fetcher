@@ -1,0 +1,84 @@
+services:
+  price-fetcher:
+    container_name: shogun-price-fetcher
+    build:
+      context: ../
+      dockerfile: ./docker/fetcher/Dockerfile
+    image: shogun-price-fetcher
+    restart: always
+    environment:
+      - CONFIG_PATH=/app/config.toml
+    depends_on:
+      - otlp-collector
+
+  prometheus:
+    container_name: prometheus
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus:/etc/prometheus
+      - prometheus-data:/prometheus-data
+    restart: always
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--web.enable-remote-write-receiver'
+      - '--enable-feature=exemplar-storage'
+      - '--enable-feature=expand-external-labels'
+    depends_on:
+      - otlp-collector
+
+  tempo:
+    container_name: grafana-tempo
+    image: grafana/tempo:latest
+    command: [ "-config.file=/etc/tempo.yml" ]
+    volumes:
+      - ./grafana/tempo.yml:/etc/tempo.yml
+      - ./grafana/tempo-data:/tmp/tempo
+    ports:
+       - "3200:3200"    # tempo
+       - "9095:9095"    # tempo grpc
+       # - "4317:4317"    # otlp grpc
+       # - "4318:4318"    # otlp http
+
+  loki:
+    container_name: grafana-loki
+    image: grafana/loki:main
+    restart: always
+    volumes:
+      - ./grafana/loki.yaml:/etc/loki/local-config.yaml
+    command: -config.file=/etc/loki/local-config.yaml
+    ports:
+      - "3100:3100"
+
+  grafana:
+    container_name: grafana
+    image: grafana/grafana:latest
+    ports:
+      - "33000:3000"
+    volumes:
+      - ./grafana/datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml
+      - grafana-data:/grafana
+    env_file:
+      - ./grafana/.env.grafana
+    restart: always
+  
+  otlp-collector:
+    container_name: otlp-collector
+    image: otel/opentelemetry-collector-contrib:0.119.0
+    command: "--config /etc/otel-config.yaml"
+    volumes:
+      - ./opentelemetry/otel-config.yaml:/etc/otel-config.yaml
+    ports:
+      - "4317:4317" # gRPC OTLP receiver
+      - "4318:4318" # HTTP OTLP receiver
+      - "8889:8889" # Prometheus
+    depends_on:
+      - tempo
+      - loki
+
+volumes:
+  prometheus-data:
+    driver: local
+  grafana-data:
+    driver: local

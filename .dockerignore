@@ -1,0 +1,5 @@
+target
+.vscode
+.idea
+docker/grafana/tempo-data
+.git

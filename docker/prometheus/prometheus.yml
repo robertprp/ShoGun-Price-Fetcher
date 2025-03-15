@@ -1,0 +1,9 @@
+global:
+  evaluation_interval: 5s
+  scrape_interval: 5s
+
+# A scrape configuration containing exactly one endpoint to scrape:
+scrape_configs:
+  - job_name: api
+    static_configs:
+      - targets: [ 'otlp-collector:8889' ]

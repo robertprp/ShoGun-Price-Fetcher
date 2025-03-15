@@ -1,0 +1,9 @@
+[tasks]
+
+[tasks.fetcher] 
+interval = 10 # seconds
+
+[environment]
+name = "local"
+otlp_grpc_endpoint = "http://localhost:4317"
+otlp_http_endpoint = "http://localhost:4318"
