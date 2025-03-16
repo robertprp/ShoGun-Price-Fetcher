@@ -14,3 +14,24 @@ To start up all services, use:
 ```bash
 docker compose -f docker/docker-compose.yaml up --build -d
 ```
+
+To stop all services, use:
+```bash
+docker compose -f docker/docker-compose.yaml down
+```
+
+To start up only one service, use:
+```bash
+docker compose -f docker/docker-compose.yaml up --build -d grafana
+```
+## Grafana
+
+Grafana is available at `http://localhost:33000`
+
+Default credentials are:
+- Username: `admin`
+- Password: `admin`
+
+Logs will be available at Loki.
+Prometheus will have some data.
+Tempo should contain the executed price fetching action.
