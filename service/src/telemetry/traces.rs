@@ -25,6 +25,7 @@ where
         &telemetry_params.service_name.clone(),
         &telemetry_params.service_namespace.clone(),
     );
+    
     let otlp_exporter = opentelemetry_otlp::SpanExporter::builder()
         .with_tonic()
         .with_endpoint(telemetry_params.grpc_endpoint)

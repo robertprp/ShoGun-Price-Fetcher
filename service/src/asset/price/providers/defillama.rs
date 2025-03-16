@@ -14,11 +14,11 @@ use std::{collections::HashMap, pin::Pin, sync::Arc};
 use tokio::sync::broadcast::{self as broadcast, Sender};
 use tokio::sync::RwLock;
 use tokio_stream::{wrappers::BroadcastStream, Stream};
-use tracing::{info, Instrument};
+use tracing::{info, info_span, instrument, Instrument};
 
 pub const DEFILLAMA_PRICE_FETCHER_URL: &str = "https://coins.llama.fi/prices/current";
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct DefiLlamaProvider {
     assets: Arc<RwLock<HashMap<String, Asset>>>,
     sender: Sender<AssetPriceEvent>,
@@ -127,7 +127,7 @@ impl PriceProvider for DefiLlamaProvider {
     fn start(&self) -> tokio::task::JoinHandle<Result<(), Error>> {
         let provider_clone = self.clone();
         let sender = self.sender.clone();
-        let span = tracing::info_span!("price_provider", price_provider = "defillama");
+        let span = info_span!("price_provider", price_provider = "defillama");
 
         tokio::spawn(
             async move {
@@ -156,8 +156,7 @@ impl PriceProvider for DefiLlamaProvider {
                 }
 
                 Ok(())
-            }
-            .instrument(span),
+            }.instrument(span),
         )
     }
 }

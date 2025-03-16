@@ -8,12 +8,11 @@ use service::{
     telemetry,
 };
 use std::path::Path;
-use tracing::info;
+use tracing::{info, info_span, Instrument};
 
 mod cli;
 
 #[tokio::main]
-#[tracing::instrument]
 async fn main() {
     info!("Starting grafana shogun");
     let args = Cli::parse();
@@ -63,13 +62,13 @@ async fn main() {
 
     let _ = price_service.add_asset(weth_coin).await;
     let _ = price_service.add_asset(trump_coin).await;
-
-    price_service.start().await;
+    
+    price_service.start().in_current
 
     let mut stream_handler = price_service.subscribe().await;
 
     while let Some(event) = stream_handler.next().await {
-        info!("Received a new asset event: {:?}", event);
+        info!("Received a new asset price event: {:?}", event);
     }
 
     telemetry::shutdown()

@@ -20,9 +20,9 @@ thiserror = "1.0.37"
 opentelemetry = { version = "0.27.0", features = ["logs", "metrics", "tracing", "trace"] }
 opentelemetry-otlp = { version = "0.27.0", features = ["tonic", "trace", "tracing", "tokio", "grpc-tonic", "metrics", "logs", "http-proto", "reqwest-client"] }
 tracing-subscriber = { version = "0.3.18", features = ["env-filter", "registry", "std", "fmt"] }
-opentelemetry_sdk = { version = "0.27.0", features = ["tokio", "rt-tokio", "rt-tokio-current-thread", "metrics", "logs", "testing", "trace", "tracing"] }
+opentelemetry_sdk = { version = "0.27.0", features = ["tokio", "rt-tokio", "rt-tokio-current-thread", "metrics", "logs", "trace", "tracing"] }
 tracing-opentelemetry = { version = "0.28.0", features = ["tracing-log"] }
-opentelemetry-appender-tracing = { version = "0.27.0", features = ["log", "experimental_metadata_attributes", "spec_unstable_logs_enabled"] }
+opentelemetry-appender-tracing = { version = "0.27.0", features = ["log"] }
 opentelemetry-stdout = { version = "0.27.0", features = ["logs", "metrics", "trace"] }
 tracing = { version = "0.1.41", features = ["std"] }
 error-stack = "0.5.0"

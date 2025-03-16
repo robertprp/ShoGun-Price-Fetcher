@@ -5,7 +5,7 @@ use lib::error::Error;
 use price_provider::{AssetPriceEvent, PriceProvider};
 use providers::defillama::DefiLlamaProvider;
 use std::{pin::Pin, sync::OnceLock};
-use tracing::{info, warn};
+use tracing::{info, warn, Instrument};
 
 use crate::services::{ServiceFactory, ServiceProvider};
 
