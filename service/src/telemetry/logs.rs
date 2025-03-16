@@ -1,11 +1,11 @@
-use std::time::Duration;
 use error_stack::{Result, ResultExt};
 use lib::error::Error;
 use opentelemetry_appender_tracing::layer::OpenTelemetryTracingBridge;
 use opentelemetry_otlp::{Protocol, WithExportConfig};
 use opentelemetry_sdk::logs::{Logger, LoggerProvider};
 use opentelemetry_sdk::runtime;
-use tracing::{Subscriber};
+use std::time::Duration;
+use tracing::Subscriber;
 use tracing_subscriber::filter::Filtered;
 use tracing_subscriber::fmt::writer::MakeWriterExt;
 use tracing_subscriber::EnvFilter;
@@ -19,7 +19,7 @@ pub fn new<S, R>(
     (
         Box<dyn Layer<S> + Send + Sync>, // stdout layer
         Box<dyn Layer<R> + Send + Sync>, // otel layer
-        LoggerProvider
+        LoggerProvider,
     ),
     Error,
 >
@@ -35,7 +35,10 @@ where
         .build()
         .change_context(Error::Unknown)?;
 
-    let resource = get_otlp_resource(&telemetry_params.service_name, &telemetry_params.service_namespace);
+    let resource = get_otlp_resource(
+        &telemetry_params.service_name,
+        &telemetry_params.service_namespace,
+    );
     let provider: LoggerProvider = LoggerProvider::builder()
         .with_resource(resource)
         .with_batch_exporter(exporter, runtime::Tokio)

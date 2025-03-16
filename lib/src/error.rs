@@ -4,16 +4,16 @@ use thiserror::Error;
 pub enum Error {
     #[error("Unknown error")]
     Unknown,
-    
+
     #[error("Failed to serialize")]
     Serialization,
-    
+
     #[error("Failed to deserialize")]
     Deserialization,
-    
+
     #[error("Invalid config")]
     InvalidConfig,
-    
+
     #[error("Failed to fetch")]
     FetchError,
 }

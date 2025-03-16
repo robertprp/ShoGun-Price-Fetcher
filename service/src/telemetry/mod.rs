@@ -11,9 +11,9 @@ use opentelemetry_sdk::logs::LoggerProvider;
 use opentelemetry_sdk::metrics::SdkMeterProvider;
 use opentelemetry_sdk::propagation::TraceContextPropagator;
 use opentelemetry_sdk::Resource;
+use std::sync::{Arc, OnceLock};
 use tracing::info;
 use tracing::subscriber::set_global_default;
-use std::sync::{Arc, OnceLock};
 use tracing_opentelemetry::MetricsLayer;
 use tracing_subscriber::filter::Targets;
 use tracing_subscriber::layer::SubscriberExt;
@@ -31,40 +31,39 @@ pub fn init(
     let target = Targets::new()
         .with_target("grafana_shogun", log_level)
         .with_target("service", log_level);
-    
-    let telemetry_params = TelemetryParams::new(&config_service.clone(), &service_name, Some(log_level));
+
+    let telemetry_params =
+        TelemetryParams::new(&config_service.clone(), &service_name, Some(log_level));
 
     let meter_provider = metrics::new(telemetry_params.clone())?;
-    let (std_layer, otlp_layer, logger_provider) =
-        logs::new(telemetry_params.clone())?;
+    let (std_layer, otlp_layer, logger_provider) = logs::new(telemetry_params.clone())?;
     let (trace_layer, trace_provider) = traces::new(telemetry_params.clone())?;
 
     // Add panics to tracing
     init_panic_hook();
-    
+
     let registry = tracing_subscriber::Registry::default()
         .with(otlp_layer) // Logs layer
         .with(MetricsLayer::new(meter_provider.clone())) // Metrics layer
         .with(std_layer) // Standard output layer
         .with(target) // Target filter
         .with(trace_layer);
-    
+
     // Discussion: https://github.com/open-telemetry/opentelemetry-rust/discussions/1605
-    METER_PROVIDER.set(meter_provider.clone()).expect(
-        "This is not meant to be used more than once in the same process",
-    );
-    LOGGER_PROVIDER.set(logger_provider.clone()).expect(
-        "This is not meant to be used more than once in the same process",
-    );
+    METER_PROVIDER
+        .set(meter_provider.clone())
+        .expect("This is not meant to be used more than once in the same process");
+    LOGGER_PROVIDER
+        .set(logger_provider.clone())
+        .expect("This is not meant to be used more than once in the same process");
 
     global::set_text_map_propagator(TraceContextPropagator::new()); // Extra data for traces
     global::set_meter_provider(meter_provider);
     global::set_tracer_provider(trace_provider);
-    
+
     // Initiazlie global subscriber
-    set_global_default(registry)
-        .change_context(Error::Unknown)?;
-    
+    set_global_default(registry).change_context(Error::Unknown)?;
+
     Ok(())
 }
 
@@ -94,13 +93,14 @@ pub async fn shutdown() -> Result<(), Error> {
         shutdown_logger_provider();
         shutdown_tracer_provider();
         shutdown_meter_provider();
-    }).await;
-    
+    })
+    .await;
+
     if let Err(e) = shutdown_handler {
         tracing::error!(reason = ?e, "Failed to shutdown telemetry");
         std::process::exit(1);
     }
-    
+
     Ok(())
 }
 
@@ -132,7 +132,7 @@ fn init_panic_hook() {
             panic.backtrace = tracing::field::display(std::backtrace::Backtrace::capture()),
             "A panic occurred"
         );
-        
+
         // TODO: We should send here an event to a channel in order to flush logs
 
         prev_hook(panic_info);
@@ -169,7 +169,11 @@ pub struct TelemetryParams {
 }
 
 impl TelemetryParams {
-    pub fn new(config_service: &ConfigService, service_name: &str, log_level: Option<tracing::Level>) -> Self {
+    pub fn new(
+        config_service: &ConfigService,
+        service_name: &str,
+        log_level: Option<tracing::Level>,
+    ) -> Self {
         Self {
             service_name: service_name.to_owned(),
             service_namespace: config_service.environment.name.clone(),

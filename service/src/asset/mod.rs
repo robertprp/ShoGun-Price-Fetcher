@@ -8,7 +8,7 @@ pub enum Chain {
 
 #[derive(Debug, Clone, buildstructor::Builder)]
 pub struct Asset {
-    pub address: String, 
+    pub address: String,
     pub symbol: String,
     pub chain: Chain,
     pub name: Option<String>,

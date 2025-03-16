@@ -10,12 +10,21 @@ use tracing_subscriber::Layer;
 use super::{get_otlp_resource, TelemetryParams};
 
 pub fn new<S>(
-    telemetry_params: TelemetryParams
-) -> Result<(Box<dyn Layer<S> + Send + Sync>, opentelemetry_sdk::trace::TracerProvider), Error>
+    telemetry_params: TelemetryParams,
+) -> Result<
+    (
+        Box<dyn Layer<S> + Send + Sync>,
+        opentelemetry_sdk::trace::TracerProvider,
+    ),
+    Error,
+>
 where
     S: Subscriber + for<'a> tracing_subscriber::registry::LookupSpan<'a> + Send + Sync,
 {
-    let resource = get_otlp_resource(&telemetry_params.service_name.clone(), &telemetry_params.service_namespace.clone());
+    let resource = get_otlp_resource(
+        &telemetry_params.service_name.clone(),
+        &telemetry_params.service_namespace.clone(),
+    );
     let otlp_exporter = opentelemetry_otlp::SpanExporter::builder()
         .with_tonic()
         .with_endpoint(telemetry_params.grpc_endpoint)
@@ -28,7 +37,10 @@ where
         .with_resource(resource.clone())
         .build();
 
-    let tracer_name = format!("{}-{}-tracer", telemetry_params.service_name, telemetry_params.service_namespace);
+    let tracer_name = format!(
+        "{}-{}-tracer",
+        telemetry_params.service_name, telemetry_params.service_namespace
+    );
     let tracer = provider.tracer(tracer_name.clone());
 
     let tracing_layer = OpenTelemetryLayer::new(tracer);

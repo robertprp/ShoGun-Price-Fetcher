@@ -1,3 +1,4 @@
+use crate::asset::Asset;
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use error_stack::Result;
@@ -6,7 +7,6 @@ use rust_decimal::Decimal;
 use std::pin::Pin;
 use tokio::task::JoinHandle;
 use tokio_stream::Stream;
-use crate::asset::Asset;
 
 #[derive(Clone, Debug)]
 pub struct AssetPriceEvent {
@@ -18,7 +18,7 @@ pub struct AssetPriceEvent {
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum AssetPriceProvider {
-    DeFiLlama
+    DeFiLlama,
 }
 
 #[async_trait]

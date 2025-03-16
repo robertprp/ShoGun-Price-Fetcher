@@ -1,10 +1,8 @@
-use std::{
-    fmt::Display, fs, ops::Deref, path::Path, str::FromStr, sync::Arc,
-};
 use async_trait::async_trait;
 use error_stack::{Report, Result, ResultExt};
 use lib::error::Error;
 use serde::{Deserialize, Serialize};
+use std::{fmt::Display, fs, ops::Deref, path::Path, str::FromStr, sync::Arc};
 
 use crate::services::{ServiceFactory, ServiceProvider};
 
@@ -25,11 +23,11 @@ impl<'de> Deserialize<'de> for ConfigService {
         #[derive(Deserialize, Default)]
         struct AdHocConfig {
             pub tasks: TaskConfigs,
-            pub environment: EnvironmentConfig
+            pub environment: EnvironmentConfig,
         }
 
         let ad_hoc: AdHocConfig = serde::Deserialize::deserialize(deserializer)?;
-        
+
         ConfigService::builder()
             .tasks(ad_hoc.tasks)
             .environment(ad_hoc.environment)
@@ -42,9 +40,8 @@ impl FromStr for ConfigService {
     type Err = Report<Error>;
 
     fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
-        let toml_config: ConfigService = toml::from_str(s)
-            .change_context(Error::InvalidConfig)?;
-        
+        let toml_config: ConfigService = toml::from_str(s).change_context(Error::InvalidConfig)?;
+
         Ok(toml_config)
     }
 }
@@ -85,8 +82,7 @@ impl ConfigService {
     }
 
     pub fn read_file(path: &Path) -> Result<Self, Error> {
-        let config = fs::read_to_string(path)
-            .change_context(Error::Unknown)?;
+        let config = fs::read_to_string(path).change_context(Error::Unknown)?;
 
         config.parse()
     }

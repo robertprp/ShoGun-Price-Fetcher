@@ -1,11 +1,11 @@
-use std::{pin::Pin, sync::OnceLock};
 use async_trait::async_trait;
+use error_stack::{Report, Result};
 use futures::{stream::select_all, Stream};
 use lib::error::Error;
 use price_provider::{AssetPriceEvent, PriceProvider};
 use providers::defillama::DefiLlamaProvider;
+use std::{pin::Pin, sync::OnceLock};
 use tracing::{info, warn};
-use error_stack::{Report, Result};
 
 use crate::services::{ServiceFactory, ServiceProvider};
 
@@ -18,18 +18,20 @@ static SERVICE_INSTANCE: OnceLock<PriceService> = OnceLock::new();
 
 pub struct PriceService {
     providers: Vec<Box<dyn PriceProvider + Sync + Send>>,
-    is_running: bool
+    is_running: bool,
 }
 
 impl PriceService {
     pub async fn new(services: ServiceProvider) -> Self {
-        let providers: Vec<Box<dyn PriceProvider + Sync + Send>> = vec![
-            Box::new(DefiLlamaProvider::new(services.clone()).await),
-        ];
-        
-        Self { providers, is_running: false }
+        let providers: Vec<Box<dyn PriceProvider + Sync + Send>> =
+            vec![Box::new(DefiLlamaProvider::new(services.clone()).await)];
+
+        Self {
+            providers,
+            is_running: false,
+        }
     }
-    
+
     pub async fn add_asset(&self, asset: Asset) {
         for provider in self.providers.iter() {
             if let Err(e) = provider.add_asset(asset.clone()).await {
@@ -45,7 +47,7 @@ impl PriceService {
             }
         }
     }
-    
+
     /// Start all price providers
     pub async fn start(&mut self) {
         if self.is_running {
@@ -56,11 +58,11 @@ impl PriceService {
         for provider in self.providers.iter() {
             provider.start();
         }
-        
+
         self.is_running = true;
         info!("Price providers started");
     }
-    
+
     /// Subscribe to all price providers asset price events
     pub async fn subscribe(&self) -> Pin<Box<dyn Stream<Item = AssetPriceEvent> + Send>> {
         let mut streams = Vec::new();
