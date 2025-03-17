@@ -8,11 +8,12 @@ use service::{
     telemetry,
 };
 use std::path::Path;
-use tracing::{info, info_span, Instrument};
+use tracing::info;
 
 mod cli;
 
 #[tokio::main]
+#[tracing::instrument]
 async fn main() {
     info!("Starting grafana shogun");
     let args = Cli::parse();
@@ -26,14 +27,6 @@ async fn main() {
         .expect("Failed to initialize telemetry");
 
     info!("Starting service: {}", service_name);
-
-    let meter = telemetry::get_meter_provider().meter("shogun");
-    let counter = meter
-        .u64_counter("service_startups")
-        .with_description("Number of times the service has started")
-        .build();
-
-    counter.add(1, &[]);
 
     let services = ServiceProvider::new();
     services.add_service(config.clone()).await;
@@ -60,10 +53,10 @@ async fn main() {
         .decimals(18)
         .build();
 
-    let _ = price_service.add_asset(weth_coin).await;
-    let _ = price_service.add_asset(trump_coin).await;
-    
-    price_service.start().in_current
+    price_service.add_asset(weth_coin).await;
+    price_service.add_asset(trump_coin).await;
+
+    price_service.start().await;
 
     let mut stream_handler = price_service.subscribe().await;
 

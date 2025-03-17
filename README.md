@@ -10,6 +10,19 @@ cargo build --workspace -r
 ```
 
 ### Docker (best approach)
+Update `config.toml` with the following docker specific configuration:
+```toml
+[tasks]
+
+[tasks.fetcher] 
+interval = 10 # seconds
+
+[environment]
+name = "local-docker"
+otlp_grpc_endpoint = "http://otlp-collector:4317"
+otlp_http_endpoint = "http://otlp-collector:4318"
+```
+
 To start up all services, use:
 ```bash
 docker compose -f docker/docker-compose.yaml up --build -d
@@ -34,4 +47,4 @@ Default credentials are:
 
 Logs will be available at Loki.
 Prometheus will have some data.
-Tempo should contain the executed price fetching action.
+Tempo should contain the executed price fetching action traces.

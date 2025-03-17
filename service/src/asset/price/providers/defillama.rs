@@ -1,6 +1,7 @@
 use crate::asset::price::price_provider::{AssetPriceEvent, AssetPriceProvider, PriceProvider};
 use crate::asset::Chain;
 use crate::services::ServiceProvider;
+use crate::telemetry;
 use crate::{asset::Asset, config::ConfigService};
 use async_trait::async_trait;
 use chrono::{TimeZone, Utc};
@@ -40,6 +41,7 @@ impl DefiLlamaProvider {
         }
     }
 
+    #[instrument(name = "fetch_asset_prices")]
     pub async fn fetch_asset_prices(&self) -> Result<Vec<AssetPriceEvent>, Error> {
         let assets = self.assets.read().await.clone();
 
@@ -73,12 +75,18 @@ impl DefiLlamaProvider {
             .filter_map(|(asset_id, coin_info)| {
                 let address = match asset_id.split(':').last() {
                     Some(addr) => addr.to_string(),
-                    None => return None,
+                    None => {
+                        tracing::error!("Failed to parse asset id: {asset_id}");
+                        return None;
+                    }
                 };
 
                 let asset = match assets.get(&address) {
                     Some(asset) => asset.clone(),
-                    None => return None,
+                    None => {
+                        tracing::error!("Failed to find asset with address: {address}");
+                        return None;
+                    }
                 };
 
                 let price = Decimal::from_f64(coin_info.price).unwrap_or(Decimal::ZERO);
@@ -127,9 +135,9 @@ impl PriceProvider for DefiLlamaProvider {
     fn start(&self) -> tokio::task::JoinHandle<Result<(), Error>> {
         let provider_clone = self.clone();
         let sender = self.sender.clone();
-        let span = info_span!("price_provider", price_provider = "defillama");
+        let span = info_span!("price_provider", price_provider = "defillama").or_current();
 
-        tokio::spawn(
+        tokio::spawn({
             async move {
                 let mut interval = tokio::time::interval(std::time::Duration::from_secs(
                     provider_clone.fetch_interval,
@@ -137,6 +145,14 @@ impl PriceProvider for DefiLlamaProvider {
 
                 loop {
                     interval.tick().await;
+
+                    let times_fetched_counter = telemetry::get_meter_provider()
+                        .meter("shogun")
+                        .u64_counter("times_fetched_counter")
+                        .with_description("Number of times DefiLlama has been fetched")
+                        .build();
+
+                    times_fetched_counter.add(1, &[]);
 
                     match provider_clone.fetch_asset_prices().await {
                         Ok(price_events) => {
@@ -156,8 +172,9 @@ impl PriceProvider for DefiLlamaProvider {
                 }
 
                 Ok(())
-            }.instrument(span),
-        )
+            }
+            .instrument(span)
+        })
     }
 }
 
